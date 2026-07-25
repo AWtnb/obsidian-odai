@@ -27,9 +27,15 @@ Run below command in Vault root directory.
 $n="obsidian-random-topic";$repo="https://github.com/AWtnb/$n.git";$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory}Push-Location $p;git clone $repo; cd $n;if (Get-Command code -ErrorAction SilentlyContinue){code .};Pop-Location
 ```
 
+With [ghq](https://github.com/x-motemen/ghq):
+
+```PowerShell
+ghq get "https://github.com/AWtnb/obsidian-random-topic" --silent|sv src;$p=".obsidian"|Join-Path -ChildPath "plugins";if (-not(Test-Path $p -PathType Container)){New-Item -Path $p -ItemType Directory};Push-Location $p;New-Item -Name (gi $src).Name -Value $src -ItemType Junction -Confirm -Force; Pop-Location; code $src
+```
+
 Afterwords, run `npm i` and `npm run dev`.
 
-Then on Obsidian, run `Reload app without saving` command. `Yonda` should appear in `Community plugins` setting.
+Then on Obsidian, run `Reload app without saving` command. `Random-Topic` should appear in `Community plugins` setting.
 
 
 ---
