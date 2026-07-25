@@ -1,38 +1,51 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import MyPlugin from './main';
+import type RandomTopicPlugin from './main';
 
-export interface MyPluginSettings {
-	mySetting: string;
+const defaultTopics = [
+	'今日見た夢',
+	'印象的なやり取り',
+	'学び',
+	'できるようになったこと',
+	'感動したこと',
+	'驚いたこと',
+	'嬉しかったこと',
+];
+
+export interface RandomTopicPluginSettings {
+	topics: string[];
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default',
+export const DEFAULT_SETTINGS: RandomTopicPluginSettings = {
+	topics: defaultTopics,
 };
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class RandomTopicSettingTab extends PluginSettingTab {
+	plugin: RandomTopicPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: RandomTopicPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
 		const { containerEl } = this;
-
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Settings #1')
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder('Enter your secret')
-					.setValue(this.plugin.settings.mySetting)
+			.setName('Topic candidates')
+			.setDesc(
+				'1行につき1つのトピック候補を入力してください。' +
+					'新規ノート作成時に、この中からランダムに1つ選んで {{topic}} を置換します。',
+			)
+			.addTextArea((text) => {
+				text.setPlaceholder(defaultTopics.join('\n'))
+					.setValue(this.plugin.settings.topics.join('\n'))
 					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
+						this.plugin.settings.topics = value.split('\n');
 						await this.plugin.saveSettings();
-					}),
-			);
+					});
+				text.inputEl.rows = 10;
+				text.inputEl.addClass('random-topic-settings-textarea');
+			});
 	}
 }

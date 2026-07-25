@@ -2,88 +2,59 @@ import {
 	Editor,
 	MarkdownView,
 	MarkdownFileInfo,
-	Modal,
 	Notice,
 	Plugin,
+	TFile,
 } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
+	RandomTopicPluginSettings,
+	RandomTopicSettingTab,
 } from './settings';
 
-// Remember to rename these classes and interfaces!
+const TOPIC_PLACEHOLDER = '{{topic}}';
 
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+// Templaterなど非同期でテンプレートを流し込む環境向けの猶予時間(ms)
+const CREATE_EVENT_DELAY_MS = 100;
+
+export default class RandomTopicPlugin extends Plugin {
+	settings!: RandomTopicPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (_evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		this.addSettingTab(new RandomTopicSettingTab(this.app, this));
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+		this.registerEvent(
+			this.app.vault.on('create', (file) => {
+				if (!this.app.workspace.layoutReady) return;
+				if (!(file instanceof TFile)) return;
+				if (file.extension !== 'md') return;
 
-		// This adds a simple command that can be triggered anywhere
+				window.setTimeout(() => {
+					void this.replaceTopicPlaceholder(file);
+				}, CREATE_EVENT_DELAY_MS);
+			}),
+		);
+
 		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
+			id: 'insert-random-topic',
+			name: 'Insert random topic',
 			editorCallback: (
 				editor: Editor,
 				_ctx: MarkdownView | MarkdownFileInfo,
 			) => {
-				editor.replaceSelection('Sample editor command');
-			},
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+				const topics = this.getTopicList();
+				if (topics.length === 0) {
+					new Notice(
+						'トピック候補が設定されていません。設定画面から追加してください。',
+					);
+					return;
 				}
-				return false;
+				const topic = topics[Math.floor(Math.random() * topics.length)];
+				editor.replaceSelection(topic!);
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(activeDocument, 'click', (_evt: MouseEvent) => {
-			new Notice('Click');
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000),
-		);
 	}
 
 	onunload() {}
@@ -92,23 +63,57 @@ export default class MyPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
+			(await this.loadData()) as Partial<RandomTopicPluginSettings>,
 		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-}
 
-class SampleModal extends Modal {
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
+	private getTopicList(): string[] {
+		return this.settings.topics
+			.map((line) => line.trim())
+			.filter((line) => 0 < line.length);
 	}
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
+	/** Fisher-Yatesシャッフル(非破壊) */
+	private shuffle<T>(array: T[]): T[] {
+		const result = [...array];
+		for (let i = result.length - 1; 0 < i; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[result[i], result[j]] = [result[j]!, result[i]!];
+		}
+		return result;
+	}
+
+	private async replaceTopicPlaceholder(file: TFile) {
+		await this.app.vault.process(file, (content) => {
+			const parts = content.split(TOPIC_PLACEHOLDER);
+			const placeholderCount = parts.length - 1;
+			if (placeholderCount === 0) return content;
+
+			const topics = this.getTopicList();
+			if (topics.length === 0) {
+				new Notice(
+					'トピック候補が設定されていないため {{topic}} を置換できませんでした。',
+				);
+				return content;
+			}
+
+			// n個の候補をシャッフルし、出現箇所ごとに先頭から重複なく消費する。
+			// m > n の場合、超えた分の {{topic}} はそのまま残す。
+			const shuffled = this.shuffle(topics);
+			const replaced = parts.reduce((acc, part, i) => {
+				if (i === 0) return part;
+				const replacement =
+					i - 1 < shuffled.length
+						? shuffled[i - 1]
+						: TOPIC_PLACEHOLDER;
+				return acc + replacement + part;
+			});
+
+			return replaced;
+		});
 	}
 }
