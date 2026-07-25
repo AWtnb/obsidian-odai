@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "random-topic",
+	"name": "Random Topic",
 	"version": "1.0.0",
 	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Suggest daily note topics.",
+	"author": "AWtnb",
+	"authorUrl": "https://github.com/AWtnb/obsidian-random-topic",
 	"isDesktopOnly": false
 }
