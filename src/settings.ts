@@ -2,13 +2,21 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import type RandomTopicPlugin from './main';
 
 const defaultTopics = [
-	'今日見た夢',
+	'今朝の夢',
 	'印象的なやり取り',
 	'学び',
 	'できるようになったこと',
-	'感動したこと',
-	'驚いたこと',
+	'感動',
+	'驚き',
 	'嬉しかったこと',
+	'ふと思い出したこと',
+	'欲しくなったもの',
+	'食べ物',
+	'天気の印象',
+	'目に留まったもの',
+	'今日聞いた音楽や音',
+	'やってみたくなったこと',
+	'誰かの何気ない一言',
 ];
 
 export interface RandomTopicPluginSettings {
