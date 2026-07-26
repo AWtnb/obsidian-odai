@@ -17,6 +17,12 @@ const defaultTopics = [
 	'今日聞いた音楽や音',
 	'やってみたくなったこと',
 	'誰かの何気ない一言',
+	'笑ったこと',
+	'頭の中で流れていた曲',
+	'買おうか迷ったもの',
+	'服装や身につけたもの',
+	'ラッキーだったこと',
+	'心残り',
 ];
 
 export interface RandomTopicPluginSettings {
