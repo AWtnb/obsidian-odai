@@ -77,7 +77,7 @@ export default class RandomTopicPlugin extends Plugin {
 			.filter((line) => 0 < line.length);
 	}
 
-	/** Fisher-Yatesシャッフル(非破壊) */
+	/** Fisher-Yates algorithm */
 	private shuffle<T>(array: T[]): T[] {
 		const result = [...array];
 		for (let i = result.length - 1; 0 < i; i--) {
@@ -102,7 +102,7 @@ export default class RandomTopicPlugin extends Plugin {
 			}
 
 			// n個の候補をシャッフルし、出現箇所ごとに先頭から重複なく消費する。
-			// m > n の場合、超えた分の {{topic}} はそのまま残す。
+			// n < m の場合、超えた分の {{topic}} はそのまま残す。
 			const shuffled = this.shuffle(topics);
 			const replaced = parts.reduce((acc, part, i) => {
 				if (i === 0) return part;
