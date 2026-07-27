@@ -1,6 +1,6 @@
-# Obsidian Random Topic
+# Obsidian Random Topic for Daily Notes
 
-ノート新規作成時に `{{topic}}` を設定に登録した文字列で置換する。
+ノート作成時に、設定で登録したトピック候補の中からランダムに選んでテンプレート内の `{{topic}}` を置換する。
 
 ## Install
 
