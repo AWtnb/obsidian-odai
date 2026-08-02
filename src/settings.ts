@@ -12,15 +12,15 @@ const defaultTopics = [
 	'唐突に思い出したこと',
 	'欲しくなったもの',
 	'食べ物',
-	'天気の印象',
+	'天気',
 	'目に留まったもの',
-	'今日聞こえたもの',
+	'聞こえたもの',
 	'やってみたくなったこと',
 	'誰かの何気ない一言',
 	'笑ったこと',
 	'頭の中で流れていた曲',
 	'買おうか迷ったもの',
-	'服装や身につけたもの',
+	'身につけたもの',
 	'ラッキーだったこと',
 	'心残り',
 	'思い出せないこと',
@@ -50,8 +50,7 @@ export class RandomTopicSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Topic candidates')
 			.setDesc(
-				'1行につき1つのトピック候補を入力してください。' +
-					'新規ノート作成時に、この中からランダムに1つ選んで {{topic}} を置換します。',
+				'新規ノート作成時にランダムに1行選んで {{topic}} を置換する。',
 			)
 			.addTextArea((text) => {
 				text.setPlaceholder(defaultTopics.join('\n'))
