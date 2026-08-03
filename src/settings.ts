@@ -1,38 +1,12 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type RandomTopicPlugin from './main';
 
-const defaultTopics = [
-	'今朝の夢',
-	'印象的なやり取り',
-	'学び',
-	'できるようになったこと',
-	'感動',
-	'驚き',
-	'嬉しかったこと',
-	'唐突に思い出したこと',
-	'欲しくなったもの',
-	'食べ物',
-	'天気',
-	'目に留まったもの',
-	'聞こえたもの',
-	'やってみたくなったこと',
-	'誰かの何気ない一言',
-	'笑ったこと',
-	'頭の中で流れていた曲',
-	'買おうか迷ったもの',
-	'身につけたもの',
-	'ラッキーだったこと',
-	'心残り',
-	'思い出せないこと',
-	'気になること',
-];
-
 export interface RandomTopicPluginSettings {
-	topics: string[];
+	topicsFilePath: string;
 }
 
 export const DEFAULT_SETTINGS: RandomTopicPluginSettings = {
-	topics: defaultTopics,
+	topicsFilePath: '',
 };
 
 export class RandomTopicSettingTab extends PluginSettingTab {
@@ -48,19 +22,19 @@ export class RandomTopicSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Topic candidates')
+			.setName('Topics note path')
 			.setDesc(
-				'新規ノート作成時にランダムに1行選んで {{topic}} を置換する。',
+				'トピック候補を1行ずつ書いたノートのパス（例: templates/topics）。' +
+					'新規ノート作成時にこのノートの各行からランダムに1つ選んで {{topic}} を置換する。',
 			)
-			.addTextArea((text) => {
-				text.setPlaceholder(defaultTopics.join('\n'))
-					.setValue(this.plugin.settings.topics.join('\n'))
+			.addText((text) => {
+				text.setPlaceholder('templates/topics')
+					.setValue(this.plugin.settings.topicsFilePath)
 					.onChange(async (value) => {
-						this.plugin.settings.topics = value.split('\n');
+						this.plugin.settings.topicsFilePath = value.trim();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.rows = 10;
-				text.inputEl.addClass('random-topic-settings-textarea');
+				text.inputEl.addClass('random-topic-settings-path-input');
 			});
 	}
 }

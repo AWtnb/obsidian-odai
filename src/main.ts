@@ -40,14 +40,14 @@ export default class RandomTopicPlugin extends Plugin {
 		this.addCommand({
 			id: 'insert-random-topic',
 			name: 'Insert random topic',
-			editorCallback: (
+			editorCallback: async (
 				editor: Editor,
 				_ctx: MarkdownView | MarkdownFileInfo,
 			) => {
-				const topics = this.getTopicList();
+				const topics = await this.getTopicList();
 				if (topics.length === 0) {
 					new Notice(
-						'トピック候補が設定されていません。設定画面から追加してください。',
+						'トピック候補が読み込めませんでした。設定画面でノートのパスを確認してください。',
 					);
 					return;
 				}
@@ -71,12 +71,6 @@ export default class RandomTopicPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private getTopicList(): string[] {
-		return this.settings.topics
-			.map((line) => line.trim())
-			.filter((line) => 0 < line.length);
-	}
-
 	/** Fisher-Yates algorithm */
 	private shuffle<T>(array: T[]): T[] {
 		const result = [...array];
@@ -87,16 +81,46 @@ export default class RandomTopicPlugin extends Plugin {
 		return result;
 	}
 
+	private resolveTopicsFile(path: string): TFile | null {
+		if (!path) return null;
+		const file = this.app.metadataCache.getFirstLinkpathDest(path, '');
+		return file;
+	}
+
+	/** 設定で指定されたパスのノートを読み込み、1行ずつのトピック候補に変換する */
+	private async getTopicList(): Promise<string[]> {
+		const path = this.settings.topicsFilePath;
+		if (!path) return [];
+
+		const file = this.resolveTopicsFile(path);
+		if (!file) {
+			new Notice(`トピックノートが見つかりません: ${path}`);
+			return [];
+		}
+
+		const content = await this.app.vault.read(file);
+		return content
+			.split('\n')
+			.map((line) => line.trim())
+			.filter((line) => 0 < line.length);
+	}
+
 	private async replaceTopicPlaceholder(file: TFile) {
+		// {{topic}} を含まないノートで無駄にトピックノートを読みに行かないよう、
+		// まずプレースホルダーの有無だけ軽くチェックしてから読み込む。
+		const raw = await this.app.vault.read(file);
+		if (!raw.includes(TOPIC_PLACEHOLDER)) return;
+
+		const topics = await this.getTopicList();
+
 		await this.app.vault.process(file, (content) => {
 			const parts = content.split(TOPIC_PLACEHOLDER);
 			const placeholderCount = parts.length - 1;
 			if (placeholderCount === 0) return content;
 
-			const topics = this.getTopicList();
 			if (topics.length === 0) {
 				new Notice(
-					'トピック候補が設定されていないため {{topic}} を置換できませんでした。',
+					'トピック候補が読み込めなかったため {{topic}} を置換できませんでした。',
 				);
 				return content;
 			}

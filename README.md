@@ -10,7 +10,7 @@ Run [install.ps1](install.ps1) with vault folder path as an argument.
 
 ```
 # Example
-.\install.ps1 C:\Users\awtnb\Obsidian\Diary
+powershell -nop .\install.ps1 C:\Users\awtnb\Obsidian\Diary
 ```
 
 ### Manual install
