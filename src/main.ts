@@ -39,7 +39,7 @@ export default class OdaiPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'insert-at-random',
-			name: 'Insert atrandom',
+			name: 'Insert at random',
 			editorCallback: async (
 				editor: Editor,
 				_ctx: MarkdownView | MarkdownFileInfo,
