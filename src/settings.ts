@@ -1,18 +1,18 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import type RandomTopicPlugin from './main';
+import type OdaiPlugin from './main';
 
-export interface RandomTopicPluginSettings {
+export interface OdaiPluginSettings {
 	topicsFilePath: string;
 }
 
-export const DEFAULT_SETTINGS: RandomTopicPluginSettings = {
+export const DEFAULT_SETTINGS: OdaiPluginSettings = {
 	topicsFilePath: '',
 };
 
-export class RandomTopicSettingTab extends PluginSettingTab {
-	plugin: RandomTopicPlugin;
+export class OdaiSettingTab extends PluginSettingTab {
+	plugin: OdaiPlugin;
 
-	constructor(app: App, plugin: RandomTopicPlugin) {
+	constructor(app: App, plugin: OdaiPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -34,7 +34,7 @@ export class RandomTopicSettingTab extends PluginSettingTab {
 						this.plugin.settings.topicsFilePath = value.trim();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.addClass('random-topic-settings-path-input');
+				text.inputEl.addClass('odai-settings-path-input');
 			});
 	}
 }

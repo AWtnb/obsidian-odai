@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-random-topic",
+	"name": "obsidian-odai",
 	"version": "1.0.0",
 	"description": "Suggest daily note topics.",
 	"main": "main.js",

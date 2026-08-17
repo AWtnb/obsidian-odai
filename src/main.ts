@@ -8,22 +8,22 @@ import {
 } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	RandomTopicPluginSettings,
-	RandomTopicSettingTab,
+	OdaiPluginSettings,
+	OdaiSettingTab,
 } from './settings';
 
-const TOPIC_PLACEHOLDER = '{{topic}}';
+const PLACEHOLDER = '{{topic}}';
 
 // Templaterなど非同期でテンプレートを流し込む環境向けの猶予時間(ms)
 const CREATE_EVENT_DELAY_MS = 100;
 
-export default class RandomTopicPlugin extends Plugin {
-	settings!: RandomTopicPluginSettings;
+export default class OdaiPlugin extends Plugin {
+	settings!: OdaiPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		this.addSettingTab(new RandomTopicSettingTab(this.app, this));
+		this.addSettingTab(new OdaiSettingTab(this.app, this));
 
 		this.registerEvent(
 			this.app.vault.on('create', (file) => {
@@ -32,29 +32,10 @@ export default class RandomTopicPlugin extends Plugin {
 				if (file.extension !== 'md') return;
 
 				window.setTimeout(() => {
-					void this.replaceTopicPlaceholder(file);
+					void this.replacePlaceholder(file);
 				}, CREATE_EVENT_DELAY_MS);
 			}),
 		);
-
-		this.addCommand({
-			id: 'insert-random-topic',
-			name: 'Insert random topic',
-			editorCallback: async (
-				editor: Editor,
-				_ctx: MarkdownView | MarkdownFileInfo,
-			) => {
-				const topics = await this.getTopicList();
-				if (topics.length === 0) {
-					new Notice(
-						'トピック候補が読み込めませんでした。設定画面でノートのパスを確認してください。',
-					);
-					return;
-				}
-				const topic = topics[Math.floor(Math.random() * topics.length)];
-				editor.replaceSelection(topic!);
-			},
-		});
 	}
 
 	onunload() {}
@@ -63,7 +44,7 @@ export default class RandomTopicPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<RandomTopicPluginSettings>,
+			(await this.loadData()) as Partial<OdaiPluginSettings>,
 		);
 	}
 
@@ -105,16 +86,16 @@ export default class RandomTopicPlugin extends Plugin {
 			.filter((line) => 0 < line.length);
 	}
 
-	private async replaceTopicPlaceholder(file: TFile) {
+	private async replacePlaceholder(file: TFile) {
 		// {{topic}} を含まないノートで無駄にトピックノートを読みに行かないよう、
 		// まずプレースホルダーの有無だけ軽くチェックしてから読み込む。
 		const raw = await this.app.vault.read(file);
-		if (!raw.includes(TOPIC_PLACEHOLDER)) return;
+		if (!raw.includes(PLACEHOLDER)) return;
 
 		const topics = await this.getTopicList();
 
 		await this.app.vault.process(file, (content) => {
-			const parts = content.split(TOPIC_PLACEHOLDER);
+			const parts = content.split(PLACEHOLDER);
 			const placeholderCount = parts.length - 1;
 			if (placeholderCount === 0) return content;
 
@@ -131,9 +112,7 @@ export default class RandomTopicPlugin extends Plugin {
 			const replaced = parts.reduce((acc, part, i) => {
 				if (i === 0) return part;
 				const replacement =
-					i - 1 < shuffled.length
-						? shuffled[i - 1]
-						: TOPIC_PLACEHOLDER;
+					i - 1 < shuffled.length ? shuffled[i - 1] : PLACEHOLDER;
 				return acc + replacement + part;
 			});
 

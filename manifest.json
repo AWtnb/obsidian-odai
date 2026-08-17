@@ -1,10 +1,10 @@
 {
-	"id": "random-topic",
-	"name": "Random Topic",
+	"id": "odai",
+	"name": "Odai",
 	"version": "1.0.0",
 	"minAppVersion": "1.0.0",
 	"description": "Suggest daily note topics.",
 	"author": "AWtnb",
-	"authorUrl": "https://github.com/AWtnb/obsidian-random-topic",
+	"authorUrl": "https://github.com/AWtnb/obsidian-odai",
 	"isDesktopOnly": false
 }
