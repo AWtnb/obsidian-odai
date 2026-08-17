@@ -36,6 +36,25 @@ export default class OdaiPlugin extends Plugin {
 				}, CREATE_EVENT_DELAY_MS);
 			}),
 		);
+
+		this.addCommand({
+			id: 'insert-at-random',
+			name: 'Insert atrandom',
+			editorCallback: async (
+				editor: Editor,
+				_ctx: MarkdownView | MarkdownFileInfo,
+			) => {
+				const topics = await this.getTopicList();
+				if (topics.length === 0) {
+					new Notice(
+						'トピック候補が読み込めませんでした。設定画面でノートのパスを確認してください。',
+					);
+					return;
+				}
+				const topic = topics[Math.floor(Math.random() * topics.length)];
+				editor.replaceSelection(topic!);
+			},
+		});
 	}
 
 	onunload() {}
