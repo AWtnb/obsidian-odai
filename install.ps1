@@ -7,7 +7,7 @@ function Copy-PluginFiles {
         return
     }
 
-    $extensionDir = $vaultDir | Join-Path -ChildPath ".obsidian\plugins\obsidian-yonda"
+    $extensionDir = $vaultDir | Join-Path -ChildPath ".obsidian\plugins\obsidian-odai"
     if (-not (Test-Path $extensionDir -PathType Container)) {
         New-Item $extensionDir -ItemType Directory
     }
