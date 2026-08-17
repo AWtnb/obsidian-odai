@@ -51,7 +51,7 @@ export default class OdaiPlugin extends Plugin {
 					);
 					return;
 				}
-				const topic = topics[Math.floor(Math.random() * topics.length)];
+				const [topic] = await this.drawTopics(topics, 1);
 				editor.replaceSelection(topic!);
 			},
 		});
@@ -105,33 +105,74 @@ export default class OdaiPlugin extends Plugin {
 			.filter((line) => 0 < line.length);
 	}
 
+	/**
+	 * シャッフルバッグ方式でトピックを引く。
+	 *
+	 * this.settings.topicQueue に「まだ使っていない候補」をシャッフル済みの順序で
+	 * 保持しておき、先頭から順に消費する。空になったら候補全体を再シャッフルして
+	 * 補充するため、全候補を一巡するまでは同じトピックが再登場しない。
+	 * data.json に永続化しているので、アプリ再起動やノートをまたいでも効果が続く。
+	 *
+	 * 候補ノートが編集された場合、現行の候補に存在しない項目はキューから自動的に除外する。
+	 *
+	 * @param topics 現在の候補一覧
+	 * @param count 引きたい件数
+	 * @returns 重複のないトピックの配列 (候補数が count に満たない場合は短くなる)
+	 */
+	private async drawTopics(
+		topics: string[],
+		count: number,
+	): Promise<string[]> {
+		// 候補ノートと同期（削除したものが選択肢に残らないようにする）
+		const topicSet = new Set(topics);
+		let queue = (this.settings.topicQueue ?? []).filter((t) =>
+			topicSet.has(t),
+		);
+
+		const drawn: string[] = [];
+		while (drawn.length < count && drawn.length < topics.length) {
+			if (queue.length === 0) {
+				// 今回すでに引いた分とすぐ被らないよう、drawn を除いた残りから補充する。
+				const rest = topics.filter((t) => !drawn.includes(t));
+				queue = this.shuffle(0 < rest.length ? rest : topics);
+			}
+			const next = queue.shift();
+			if (next === undefined) break;
+			drawn.push(next);
+		}
+
+		this.settings.topicQueue = queue;
+		await this.saveSettings();
+		return drawn;
+	}
+
 	private async replacePlaceholder(file: TFile) {
 		// {{topic}} を含まないノートで無駄にトピックノートを読みに行かないよう、
 		// まずプレースホルダーの有無だけ軽くチェックしてから読み込む。
 		const raw = await this.app.vault.read(file);
 		if (!raw.includes(PLACEHOLDER)) return;
 
+		const placeholderCount = raw.split(PLACEHOLDER).length - 1;
+		if (placeholderCount === 0) return;
+
 		const topics = await this.getTopicList();
+		if (topics.length === 0) {
+			new Notice(
+				'トピック候補が読み込めなかったため {{topic}} を置換できませんでした。',
+			);
+			return;
+		}
+
+		// シャッフルバッグから出現箇所の数だけ重複なく引く。
+		// n < m の場合、超えた分の {{topic}} はそのまま残す。
+		const drawn = await this.drawTopics(topics, placeholderCount);
 
 		await this.app.vault.process(file, (content) => {
 			const parts = content.split(PLACEHOLDER);
-			const placeholderCount = parts.length - 1;
-			if (placeholderCount === 0) return content;
-
-			if (topics.length === 0) {
-				new Notice(
-					'トピック候補が読み込めなかったため {{topic}} を置換できませんでした。',
-				);
-				return content;
-			}
-
-			// n個の候補をシャッフルし、出現箇所ごとに先頭から重複なく消費する。
-			// n < m の場合、超えた分の {{topic}} はそのまま残す。
-			const shuffled = this.shuffle(topics);
 			const replaced = parts.reduce((acc, part, i) => {
 				if (i === 0) return part;
 				const replacement =
-					i - 1 < shuffled.length ? shuffled[i - 1] : PLACEHOLDER;
+					i - 1 < drawn.length ? drawn[i - 1] : PLACEHOLDER;
 				return acc + replacement + part;
 			});
 

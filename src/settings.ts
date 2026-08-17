@@ -3,10 +3,12 @@ import type OdaiPlugin from './main';
 
 export interface OdaiPluginSettings {
 	topicsFilePath: string;
+	topicQueue: string[];
 }
 
 export const DEFAULT_SETTINGS: OdaiPluginSettings = {
 	topicsFilePath: '',
+	topicQueue: [],
 };
 
 export class OdaiSettingTab extends PluginSettingTab {
